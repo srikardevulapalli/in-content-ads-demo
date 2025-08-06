@@ -21,7 +21,7 @@ os.makedirs(BLENDED_DIR, exist_ok=True)
 
 app = FastAPI()
 
-# Serve frontend static files (index.html, script.js, etc.)
+# Serve entire frontend/ at root (index.html + script.js)
 app.mount(
     "/",
     StaticFiles(directory=os.path.join(BASE_DIR, '..', 'frontend'), html=True),
@@ -30,7 +30,6 @@ app.mount(
 
 @app.post("/api/upload_video")
 async def upload_video(file: UploadFile = File(...)):
-    # Save uploaded file
     ext = os.path.splitext(file.filename)[1]
     vid_id = str(uuid.uuid4())
     save_path = os.path.join(UPLOAD_DIR, f"{vid_id}{ext}")
@@ -48,13 +47,13 @@ async def rank_and_blend(req: Request):
     slot    = data.get("slot", {"start": 0, "duration": 5})
 
     src_path = os.path.join(UPLOAD_DIR, f"{vid_id}{ext}")
-    meta = analyze_video(src_path)
-    best_ad = rank_ad(persona, meta)
+    meta     = analyze_video(src_path)
+    best_ad  = rank_ad(persona, meta)
 
-    out_fn = blend_uploaded(src_path, vid_id, best_ad, slot, meta.get('overlay_region', {}))
+    out_fn = blend_uploaded(src_path, vid_id, best_ad, slot, meta.get("overlay_region", {}))
     return {
         "video_url": f"/assets/blended/{out_fn}",
-        "decision": f"Chose {best_ad['id']} at {slot['start']}s"
+        "decision":  f"Chose {best_ad['id']} at {slot['start']}s"
     }
 
 @app.get("/assets/blended/{fn}")

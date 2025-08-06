@@ -4,17 +4,16 @@ import openai
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
 ADS = [
-    {'id': 'AD-001', 'file': 'logitech_gpro_mouse.png', 'keywords': ['gaming','tech','performance','pc']},
-    {'id': 'AD-002', 'file': 'redbull_can.png',       'keywords': ['gaming','energy','drink']},
+    {'id':'AD-001','file':'logitech_gpro_mouse.png','keywords':['gaming','tech','performance','pc']},
+    {'id':'AD-002','file':'redbull_can.png',       'keywords':['gaming','energy','drink']},
 ]
 
 def rank_ad(persona: dict, opportunity: dict) -> dict:
-    prompt = (
-        f"Persona interests: {persona.get('interests')}\n"
-        f"Scene tags: {opportunity.get('tags')}\n"
-        "Ads:\n"
-    ) + ''.join([f"- {ad['id']}: keywords={ad['keywords']}\n" for ad in ADS])
-    prompt += "\nPlease return only the best ad ID."
+    prompt = f"Persona interests: {persona.get('interests')}\\nTags: {opportunity.get('tags')}\\nAds:\\n"
+    for ad in ADS:
+        prompt += f"- {ad['id']}: {ad['keywords']}\\n"
+    prompt += "\nReturn only the best ad ID."
+
     try:
         res = openai.Completion.create(
             model='gpt-4o-mini',
@@ -23,13 +22,12 @@ def rank_ad(persona: dict, opportunity: dict) -> dict:
             temperature=0.2
         )
         choice = res.choices[0].text.strip().split()[0]
-        return next(ad for ad in ADS if ad['id'] == choice)
+        return next(a for a in ADS if a['id'] == choice)
     except Exception:
-        # Fallback to simple keyword overlap
-        context = set(persona.get('interests', [])) | set(opportunity.get('tags', []))
-        best, score = None, -1
+        # Fallback: keyword overlap
+        ctx, best, score = set(persona.get('interests',[])) | set(opportunity.get('tags',[])), None, -1
         for ad in ADS:
-            s = len(context & set(ad['keywords']))
+            s = len(ctx & set(ad['keywords']))
             if s > score:
                 best, score = ad, s
         return best
