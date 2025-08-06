@@ -2,7 +2,7 @@ import os
 import uuid
 import shutil
 from fastapi import FastAPI, Request, UploadFile, File
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from perception import analyze_video
@@ -21,13 +21,7 @@ os.makedirs(BLENDED_DIR, exist_ok=True)
 
 app = FastAPI()
 
-# Serve entire frontend/ at root (index.html + script.js)
-app.mount(
-    "/",
-    StaticFiles(directory=os.path.join(BASE_DIR, '..', 'frontend'), html=True),
-    name="frontend"
-)
-
+# 1) API routes
 @app.post("/api/upload_video")
 async def upload_video(file: UploadFile = File(...)):
     ext = os.path.splitext(file.filename)[1]
@@ -40,11 +34,11 @@ async def upload_video(file: UploadFile = File(...)):
 
 @app.post("/api/rank_and_blend")
 async def rank_and_blend(req: Request):
-    data = await req.json()
-    vid_id  = data.get("video_id")
-    ext     = data.get("ext", ".mp4")
-    persona = data.get("persona", {})
-    slot    = data.get("slot", {"start": 0, "duration": 5})
+    data   = await req.json()
+    vid_id = data.get("video_id")
+    ext    = data.get("ext", ".mp4")
+    persona= data.get("persona", {})
+    slot   = data.get("slot", {"start": 0, "duration": 5})
 
     src_path = os.path.join(UPLOAD_DIR, f"{vid_id}{ext}")
     meta     = analyze_video(src_path)
@@ -59,3 +53,15 @@ async def rank_and_blend(req: Request):
 @app.get("/assets/blended/{fn}")
 def serve_blended(fn: str):
     return FileResponse(os.path.join(BLENDED_DIR, fn), media_type="video/mp4")
+
+# 2) Static assets under /static
+app.mount(
+    "/static",
+    StaticFiles(directory=os.path.join(BASE_DIR, '..', 'frontend')),
+    name="static"
+)
+
+# 3) Serve index.html at root
+@app.get("/", response_class=HTMLResponse)
+def index():
+    return open(os.path.join(BASE_DIR, '..', 'frontend', 'index.html')).read()

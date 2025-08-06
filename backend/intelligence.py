@@ -4,7 +4,7 @@ import openai
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
 ADS = [
-    {'id':'AD-001','file':'logitech_gpro_mouse.png','keywords':['gaming','tech','performance','pc']},
+    {'id':'AD-001','file':'logitech_gpro_mouse.jpg','keywords':['gaming','tech','performance','pc']},
     {'id':'AD-002','file':'redbull_can.png',       'keywords':['gaming','energy','drink']},
 ]
 

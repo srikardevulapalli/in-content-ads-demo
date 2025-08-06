@@ -20,13 +20,7 @@ COPY frontend/ ./frontend/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir \
-    fastapi uvicorn[standard] ffmpeg-python yolov5 torch torchvision openai
-
-# Pre-download YOLOv5 model
-RUN python - << 'EOF'
-from yolov5 import YOLOv5
-YOLOv5(model_path='yolov5s.pt', device='cpu')
-EOF
+    fastapi uvicorn[standard] ffmpeg-python ultralytics torch torchvision openai
 
 # Expose port
 EXPOSE 8000
